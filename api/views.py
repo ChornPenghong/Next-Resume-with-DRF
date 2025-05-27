@@ -1,15 +1,13 @@
-from rest_framework.decorators import api_view
+from .models import Language, Skill, UserProfile
+from django.contrib.auth.models import User
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from rest_framework.authtoken.models import Token
 from rest_framework import status, viewsets,filters
 from .serializers import UserSerializer, LanguageSerializer, SkillSerializer
-from django.contrib.auth.models import User
-from rest_framework.authtoken.models import Token
-from django.shortcuts import get_object_or_404
-from rest_framework.decorators import authentication_classes, permission_classes
-from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework.decorators import authentication_classes, permission_classes,api_view
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from .models import Language, Skill
-
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 
 @api_view(['POST'])
 def login(request): 
@@ -25,11 +23,17 @@ def login(request):
 @api_view(['POST'])
 def register(request): 
     serializer = UserSerializer(data=request.data)
-    if not serializer.is_valid():
+    if serializer.is_valid():
         serializer.save()
         user = User.objects.get(username=serializer.data['username'])
         user.set_password(serializer.data['password'])
         user.save()
+        
+        # create user profile data
+        user_profile = UserProfile.objects.create(
+            user=user,
+            full_name = serializer.data['username']
+        )
         token = Token.objects.create(user=user)
         return Response({
             'token': token.key,
@@ -45,6 +49,9 @@ def test_token(request):
     return Response("passed for {}".format(request.user.username))
 
 
+# @api_view(['PUT'])
+# def updateProfile()
+
 ### Language
 class LanguageViewSet(viewsets.ModelViewSet):
     queryset = Language.objects.all()
@@ -52,6 +59,8 @@ class LanguageViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
     
+    @authentication_classes([SessionAuthentication, TokenAuthentication])
+    @permission_classes([IsAuthenticated])
     def list(self, request): 
         queryset = self.filter_queryset(self.get_queryset())
         serializer = LanguageSerializer(queryset, many=True)
@@ -60,6 +69,8 @@ class LanguageViewSet(viewsets.ModelViewSet):
             "data": serializer.data
         })
         
+    @authentication_classes([SessionAuthentication, TokenAuthentication])
+    @permission_classes([IsAuthenticated])
     def create(self, request): 
         serializer = LanguageSerializer(data=request.data)
         if serializer.is_valid():
@@ -70,6 +81,8 @@ class LanguageViewSet(viewsets.ModelViewSet):
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    @authentication_classes([SessionAuthentication, TokenAuthentication])
+    @permission_classes([IsAuthenticated])
     def retrieve(self, request, pk=None):
         queryset = self.get_queryset()
         language = get_object_or_404(queryset, pk=pk)
@@ -79,6 +92,8 @@ class LanguageViewSet(viewsets.ModelViewSet):
             "data": serializer.data
         })
         
+    @authentication_classes([SessionAuthentication, TokenAuthentication])
+    @permission_classes([IsAuthenticated])
     def update(self, request, pk=None):
         queryset = self.get_queryset()
         language = get_object_or_404(queryset, pk=pk)
@@ -91,7 +106,8 @@ class LanguageViewSet(viewsets.ModelViewSet):
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                         
-               
+    @authentication_classes([SessionAuthentication, TokenAuthentication])
+    @permission_classes([IsAuthenticated]) 
     def destroy(self, request, pk=None):
         queryset = self.get_queryset()
         language = get_object_or_404(queryset, pk=pk)
@@ -104,16 +120,57 @@ class LanguageViewSet(viewsets.ModelViewSet):
 ### Skill
 class SkillViewSet(viewsets.ModelViewSet): 
     queryset = Skill.objects.all()
-    serializer_class = SkillSerializer
+    serializers = SkillSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
     
+    @authentication_classes([SessionAuthentication, TokenAuthentication])
+    @permission_classes([IsAuthenticated])
     def list(self, request): 
         queryset = self.filter_queryset(self.get_queryset())
-        serializer_class = SkillSerializer(queryset, many=True)
+        serializer = SkillSerializer(queryset, many=True)
+        
         return Response({
             "success": True,
-            "data": serializer_class.data
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    @authentication_classes([SessionAuthentication, TokenAuthentication])
+    @permission_classes([IsAuthenticated])
+    def create(self, request):
+        serializer = SkillSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "success": True,
+                "data": serializer.data
+            })
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @authentication_classes([SessionAuthentication, TokenAuthentication])
+    @permission_classes([IsAuthenticated])
+    def update(self, request, pk=None): 
+        queryset = self.get_queryset()
+        skill = get_object_or_404(queryset, pk=pk)
+        serializer = SkillSerializer(skill, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "success": True,
+                "data": serializer.data
+            })
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @authentication_classes([SessionAuthentication, TokenAuthentication])
+    @permission_classes([IsAuthenticated])
+    def destroy(self, pk=None):
+        queryset = self.get_queryset()
+        skill = get_object_or_404(queryset, pk=pk)
+        skill.delete()
+        return Response({
+            "success": True,
+            "data": "Skill deleted successfully"
         })
         
-    

@@ -16,7 +16,7 @@ Content-Type: application/json
 ### 
 GET http://127.0.0.1:8002/api/test_token
 Content-Type: application/json
-Authorization: token c1161072f4db0ce58e5d7a27b69b8510f4e62133
+Authorization: token 2948fab3c12699ff044770998da94833560b4358
 
 
 ### Languages

@@ -32,7 +32,7 @@ class UserPosition(TimeStampsModel):
 class userExperience(TimeStampsModel):
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     position = models.ForeignKey(UserPosition, on_delete=models.CASCADE)
-    company = models.CharField(max_length=100)
+    company = models.CharField(max_length=100)  
     responsibilities = models.TextField()
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
