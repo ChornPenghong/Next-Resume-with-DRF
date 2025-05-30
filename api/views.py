@@ -1,14 +1,14 @@
 from django.contrib.auth.models import User
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
 from rest_framework import status, viewsets,filters
-from .models import Language, Skill, UserProfile, UserPosition, userExperience
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.decorators import authentication_classes, permission_classes,api_view
-from .serializers import UserSerializer, LanguageSerializer, SkillSerializer, UserProfileSerializer, UserPositionSerializer, ExperienceSerializer
-from rest_framework.decorators import action
+from .models import Language, Skill, UserProfile, UserPosition, userExperience, Institute, UserEducation
+from .serializers import UserSerializer, LanguageSerializer, SkillSerializer, UserProfileSerializer, UserPositionSerializer, ExperienceSerializer, InstituteSerializer, UserEducationSerializer
 
 @api_view(['POST'])
 def login(request): 
@@ -356,4 +356,129 @@ class ExperienceViewSet(viewsets.ModelViewSet):
         return Response({
             "success": True,
             "data": "Experience deleted successfully"
+        })
+        
+class InstituteViewSet(viewsets.ModelViewSet):
+    queryset = Institute.objects.all()
+    serializer_class = InstituteSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
+    authentication_classes = [SessionAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+
+        return Response({
+            "success": True,
+            "data": serializer.data
+        })
+
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "success": True,
+                "data": serializer.data
+            })
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk=None):
+        queryset = self.get_queryset()
+        institute = get_object_or_404(queryset, pk=pk)
+        serializer = self.get_serializer(institute)
+
+        return Response({
+            "success": True,
+            "data": serializer.data
+        })
+
+    def update(self, request, pk=None):
+        queryset = self.get_queryset()
+        institute = get_object_or_404(queryset, pk=pk)
+        serializer = self.get_serializer(institute, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "success": True,
+                "data": serializer.data
+            })
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        queryset = self.get_queryset()
+        institute = get_object_or_404(queryset, pk=pk)
+        institute.delete()
+        return Response({
+            "success": True,
+            "data": "Institute deleted successfully"
+        })
+        
+class UserEducationViewSet(viewsets.ModelViewSet):
+    queryset = UserEducation.objects.all()
+    serializer_class = UserEducationSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
+    authentication_classes = [SessionAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+
+        return Response({
+            "success": True,
+            "data": serializer.data
+        })
+
+    def create(self, request):
+        user_profile = UserProfile.objects.get(user=request.user)
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(user_profile=user_profile)
+            return Response({
+                "success": True,
+                "data": serializer.data
+            })
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk=None):
+        queryset = self.get_queryset()
+        education = get_object_or_404(queryset, pk=pk)
+        serializer = self.get_serializer(education)
+
+        return Response({
+            "success": True,
+            "data": serializer.data
+        })
+
+    def update(self, request, pk=None):
+        queryset = self.get_queryset()
+        education = get_object_or_404(queryset, pk=pk)
+        serializer = self.get_serializer(education, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "success": True,
+                "data": serializer.data
+            })
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        queryset = self.get_queryset()
+        education = get_object_or_404(queryset, pk=pk)
+        education.delete()
+        return Response({
+            "success": True,
+            "data": "Education deleted successfully"
         })

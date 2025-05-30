@@ -1,13 +1,10 @@
 from rest_framework import serializers
-from .models import Language, User, Skill, UserProfile, UserPosition, userExperience
+from .models import Language, User, Skill, UserProfile, UserPosition, userExperience, Institute, UserEducation
 
 class UserSerializer(serializers.ModelSerializer): 
     class Meta: 
         model= User
-        fields = [
-            'id',
-            'username'
-        ]
+        exclude = ['password', 'groups', 'user_permissions']
         
 class UserProfileSerializer(serializers.ModelSerializer): 
     user = UserSerializer(read_only=True)
@@ -61,3 +58,23 @@ class ExperienceSerializer(serializers.ModelSerializer):
         experience = userExperience.objects.create(position=position, **validated_data)
         return experience
 
+class InstituteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Institute
+        fields = '__all__'
+        
+class UserEducationSerializer(serializers.ModelSerializer):
+    institute = InstituteSerializer(read_only=True)
+    user_profile = UserProfileSerializer(read_only=True)
+    institute_id = serializers.PrimaryKeyRelatedField(
+        queryset=Institute.objects.all(),
+        write_only=True
+    )
+    class Meta:
+        model = UserEducation
+        fields = '__all__'
+        
+    def create(self, validated_data):
+        institute = validated_data.pop('institute_id')
+        education = UserEducation.objects.create(institute=institute, **validated_data)
+        return education
