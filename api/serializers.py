@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Language, User, Skill, UserProfile, UserPosition, userExperience, Institute, UserEducation
+from .models import Language, User, Skill, UserProfile, UserPosition, userExperience, Institute, UserEducation, UserLanguage, UserReference
 
 class UserSerializer(serializers.ModelSerializer): 
     class Meta: 
@@ -78,3 +78,37 @@ class UserEducationSerializer(serializers.ModelSerializer):
         institute = validated_data.pop('institute_id')
         education = UserEducation.objects.create(institute=institute, **validated_data)
         return education
+    
+class UserLangaugeSerializer(serializers.ModelSerializer):
+    language = LanguageSerializer(read_only=True)
+    user_profile = UserProfileSerializer(read_only=True)
+    
+    language_id = serializers.PrimaryKeyRelatedField(
+        queryset=Language.objects.all(),
+        write_only=True
+    )
+    class Meta:
+        model = UserLanguage
+        fields = '__all__'
+        
+    def create(self, validated_data):
+        language = validated_data.pop('language_id')
+        language = UserLanguage.objects.create(language=language, **validated_data)
+        return language
+
+    def update(self, instance, validated_data):
+        language = validated_data.pop('language_id', None)
+        if language is not None:
+            instance.language = language
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
+
+class UserReferenceSerializer(serializers.ModelSerializer):
+    user_profile = UserProfileSerializer(read_only=True)
+    class Meta:
+        model = UserReference
+        fields = '__all__'

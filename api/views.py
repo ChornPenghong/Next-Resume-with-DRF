@@ -4,11 +4,11 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
 from rest_framework import status, viewsets,filters
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.decorators import authentication_classes, permission_classes,api_view
-from .models import Language, Skill, UserProfile, UserPosition, userExperience, Institute, UserEducation
-from .serializers import UserSerializer, LanguageSerializer, SkillSerializer, UserProfileSerializer, UserPositionSerializer, ExperienceSerializer, InstituteSerializer, UserEducationSerializer
+from .models import Language, Skill, UserProfile, UserPosition, userExperience, Institute, UserEducation, UserLanguage, UserReference
+from .serializers import UserSerializer, LanguageSerializer, SkillSerializer, UserProfileSerializer, UserPositionSerializer, ExperienceSerializer, InstituteSerializer, UserEducationSerializer, UserLangaugeSerializer, UserReferenceSerializer
 
 @api_view(['POST'])
 def login(request): 
@@ -481,4 +481,158 @@ class UserEducationViewSet(viewsets.ModelViewSet):
         return Response({
             "success": True,
             "data": "Education deleted successfully"
+        })
+        
+        
+class UserLanguageViewSet(viewsets.ModelViewSet): 
+    queryset = UserLanguage.objects.all()
+    serializer_class = UserLangaugeSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
+    authentication_classes = [SessionAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    @action (detail=False, methods=['get'], url_path='list-all')
+    def listAll(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+
+        language = [
+            {
+                "id" : item['id'],
+                "name" : item['name'],
+            }
+            for item in serializer.data
+        ]
+
+        return Response({
+            "success": True,
+            "data": language
+        })
+        
+    def create(self, request):
+        user_profile = UserProfile.objects.get(user=request.user)
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(user_profile=user_profile)
+            return Response({
+                "success": True,
+                "data": serializer.data
+            })
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def retrieve(self, request, pk=None):
+        queryset = self.get_queryset()
+        language = get_object_or_404(queryset, pk=pk)
+        serializer = self.get_serializer(language)
+
+        return Response({
+            "success": True,
+            "data": serializer.data
+        })
+    
+    def update(self, request, pk=None): 
+        queryset = self.get_queryset()
+        language = get_object_or_404(queryset, pk=pk)
+        serializer = self.get_serializer(language, data=request.data) 
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "success": True,
+                "data": serializer.data
+            })
+            
+    def destroy(self, request, pk=None):
+        queryset = self.get_queryset()
+        language = get_object_or_404(queryset, pk=pk)
+        language.delete()
+
+        return Response({
+            "success": True,
+            "data": "User Language deleted successfully"
+        })
+        
+class UserReferenceViewSet(viewsets.ModelViewSet):
+    queryset = UserReference.objects.all()
+    serializer_class = UserReferenceSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
+    authentication_classes = [SessionAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @action (detail=False, methods=['get'], url_path='list-all')    
+    def listAll(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+
+        formated_data = [
+            {
+                "id": item['id'],
+                "name": item['name']
+            }
+            for item in serializer.data
+        ]
+        
+        return Response({
+            "success": True,
+            "data": formated_data
+        })
+    
+    def list(self, request): 
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+
+        return Response({
+            "success": True,
+            "data": serializer.data
+        })        
+    
+    def create(self, request):
+        user_profile = UserProfile.objects.get(user=request.user)
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(user_profile=user_profile)
+            return Response({
+                "success": True,
+                "data": serializer.data
+            })
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk=None):
+        queryset = self.get_queryset()
+        reference = get_object_or_404(queryset, pk=pk)
+        serializer = self.get_serializer(reference)
+
+        return Response({
+            "success": True,
+            "data": serializer.data
+        })
+
+    def update(self, request, pk=None):
+        queryset = self.get_queryset()
+        reference = get_object_or_404(queryset, pk=pk)
+        serializer = self.get_serializer(reference, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "success": True,
+                "data": serializer.data
+            })
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        queryset = self.get_queryset()
+        reference = get_object_or_404(queryset, pk=pk)
+        reference.delete()
+
+        return Response({
+            "success": True,
+            "data": "User Reference deleted successfully"
         })
