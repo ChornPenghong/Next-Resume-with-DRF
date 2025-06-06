@@ -21,3 +21,7 @@
 ```bash
 git clone https://github.com/your-username/next-resume-api.git
 cd next-resume-api
+
+
+```Server
+http://167.172.68.110/api/
