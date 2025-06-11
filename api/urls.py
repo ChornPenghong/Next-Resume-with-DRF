@@ -2,6 +2,7 @@ from . import views
 from django.urls import re_path, path, include
 from rest_framework.routers import DefaultRouter 
 from .views import LanguageViewSet, SkillViewSet, PositionViewSet, ExperienceViewSet, InstituteViewSet, UserEducationViewSet, UserLanguageViewSet, UserReferenceViewSet
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 router = DefaultRouter()
 router.register(r'languages', LanguageViewSet)
@@ -19,5 +20,10 @@ urlpatterns = [
     re_path('user-detail', views.userDetail),
     re_path('update-profile', views.updateProfile),
     re_path('test_token', views.test_token),
-    path('', include(router.urls))
+    path('', include(router.urls)),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    # Optional UI:
+    path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+
 ]
